@@ -1,0 +1,58 @@
+CREATE proc [dbo].[LoadFactInternetSalesNZD] 
+AS
+BEGIN
+
+with NewData as (
+SELECT	 S.SalesOrderNumber
+		,S.SalesOrderLineNumber
+		,dp.ProductKey
+		,dd.DateKey
+		,OrderQty
+		,totalSalesAmountUSD
+		,totalSalesAmountUSD * er.rate totalSalesAmountNZD
+
+  FROM dbo.stageInternetSalesNZD s
+  join dbo.DimProduct dp on s.ProductNumber = dp.ProductAlternateKey
+  join dbo.DimDate dd on cast(s.OrderDate as date) = dd.FullDateAlternateKey
+  /*
+  If id have had time i would have back dated the data and matched on date to get that exact dates exchange rate
+  join dbo.RefExchangeRateNZD er on cast(s.OrderDate as date) = er.date
+  */
+  cross apply (Select rate  from dbo.RefExchangeRateNZD where ReferenceKey = 1) er
+ ),
+
+ LoadData AS (
+
+  select * from NewData
+  except
+ select
+		SalesOrderNumber 
+	 ,SalesOrderLineNumber
+	 ,ProductKey
+      ,DateKey
+      ,OrderQty
+      ,totalSalesAmountUSD
+      ,totalSalesAmountNZD
+  FROM AdventureWorksDW2016.dbo.FACTInternetSalesNZD
+  )
+
+Merge AdventureWorksDW2016.dbo.FACTInternetSalesNZD as t
+Using newdata as s on s.SalesOrderNumber = t.SalesOrderNumber and s.SalesOrderLineNumber = t.SalesOrderLineNumber
+when matched then
+update
+set
+	t.SalesOrderNumber = s.SalesOrderNumber
+	 ,t.SalesOrderLineNumber = s.SalesOrderLineNumber
+	 ,t.ProductKey = s.ProductKey
+      ,t.DateKey = s.DateKey
+      ,t.OrderQty = s.OrderQty
+      ,t.totalSalesAmountUSD = s.totalSalesAmountUSD
+      ,t.totalSalesAmountNZD = s.totalSalesAmountNZD
+when not matched then
+insert
+(SalesOrderNumber ,SalesOrderLineNumber,ProductKey,DateKey,OrderQty,totalSalesAmountUSD,totalSalesAmountNZD)
+values
+(s.SalesOrderNumber ,s.SalesOrderLineNumber,s.ProductKey,s.DateKey,s.OrderQty,s.totalSalesAmountUSD,s.totalSalesAmountNZD)
+;
+
+END

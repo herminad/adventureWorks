@@ -1,0 +1,26 @@
+CREATE TABLE [dbo].[FACTInternetSalesNZD](
+	[FactSalesKey] [int] IDENTITY(1,1) NOT NULL,
+	[SalesOrderNumber] [nvarchar](30) NOT NULL,
+	[SalesOrderLineNumber] [int] NOT NULL,
+	[ProductKey] [int] NOT NULL,
+	[DateKey] [int] NOT NULL,
+	[OrderQty] [smallint] NOT NULL,
+	[totalSalesAmountUSD] [money] NULL,
+	[totalSalesAmountNZD] [money] NULL
+) 
+
+
+CREATE TABLE [dbo].[RefExchangeRateNZD](
+	[ReferenceKey] [int] IDENTITY(1,1) NOT NULL,
+	[rate] [decimal](18, 2) NOT NULL,
+	[date] [date] NOT NULL
+)
+
+CREATE TABLE [dbo].[stageInternetSalesNZD](
+	[SalesOrderNumber] [nvarchar](30) NOT NULL,
+	[SalesOrderLineNumber] [int] NOT NULL,
+	[ProductNumber] [nvarchar](25) NOT NULL,
+	[OrderDate] [datetime] NOT NULL,
+	[OrderQty] [smallint] NOT NULL,
+	[totalSalesAmountUSD] [money] NULL
+)
